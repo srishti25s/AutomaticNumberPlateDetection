@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>India ALPR</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- Latest compiled JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script>
+        var FILE_PATH = "static/videos/";
+        var NUMBER_PLATES_PATH = "static/plate_result/"
+
+        console.log("Hello World");
+        function renderNumberPlate() {
+            startDetection(document.getElementById("file_name").value);
+            renderVideo(document.getElementById("file_name").value);
+        }
+
+        setTimeout(function run() {
+            getNumberPlate();
+            setTimeout(run, 10000);
+        }, 10000);
+
+        function startDetection(file_name) {
+            if (window.XMLHttpRequest) {
+                // code for modern browsers
+                xhttp = new XMLHttpRequest();
+            } else {
+                // code for old IE browsers
+                xhttp = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    //document.getElementById("demo").innerHTML = this.responseText;
+                }
+            };
+            xhttp.open("POST", "/renderVideo", true);
+            xhttp.send(FILE_PATH + file_name);
+
+        }
+
+
+        function getNumberPlate() {
+            console.log("startDetection");
+            if (window.XMLHttpRequest) {
+                // code for modern browsers
+                xhttp = new XMLHttpRequest();
+            } else {
+                // code for old IE browsers
+                xhttp = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    var file_names = this.responseText;
+                    list_files = file_names.split(",");
+                    var htmlStrNumPlte = "<div>";
+                    for (var i = 0; i < list_files.length; i++) {
+                        htmlStrNumPlte += "<p><img src ='" + NUMBER_PLATES_PATH + list_files[i] +
+                            "' alt='" + list_files[i] + "' style='height:200px;width:500px;'></p>";
+                    }
+                    htmlStrNumPlte += "</div>";
+                    document.getElementById("number_plates").innerHTML = htmlStrNumPlte;
+                }
+            };
+            xhttp.open("POST", "/numberPlatesList", true);
+            xhttp.send();
+
+        }
+
+        function renderVideo(file_name) {
+            var htmlString = "<video width='600' height='300' controls><source  src=" + FILE_PATH + file_name + "></video>";
+            document.getElementById("video_display").innerHTML = htmlString;
+        }
+
+        function streamUrl(){
+            startDetection(document.getElementById("cameraUrl").value);
+        }
+
+    </script>
+
+</head>
+
+<body>
+    <div class="well">
+        <div class="jumbotron">
+            <h1 style="text-align: center;">Automatic Number Plate Recogintion</h1>
+        </div>
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="well">
+                    <h3>Live Camera URL</h3>
+                    <input type="text" id="cameraUrl" placeholder="https://google.com">
+                    <input type="button" value="Stream URL" onclick="streamUrl()">
+                </div>
+                <div class="well">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <h3>Select Video</h3>
+                            <select name="file_name" id="file_name" onchange="renderNumberPlate()">
+                                {% for file in files%}
+                                <option value="{{file}}">{{file}}</option>
+                                {%endfor%}
+                            </select> 
+                        </div>
+                        <div class="col-sm-6">
+                            <h3>Upload Video</h3>
+                            <input type="text" placeholder="C:/Videos/v1.mp4">
+        
+                            <input type="button" value="Upload Video">         
+                        </div>
+                    </div>                   
+                </div>
+                <div class="well">
+                    <h3>Recent Plates</h3>
+                    <div id="number_plates">
+                        <p></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 well">
+                <div class="video_playing">
+                    <h3>Video</h3>
+                    <div id="video_display">
+                        <video width="600" height="300" autoplay>
+                            <source id="video_area">
+                            Video for number plate detection
+                        </video>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
