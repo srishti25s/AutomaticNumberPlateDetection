@@ -26,7 +26,7 @@
             setTimeout(run, 10000);
         }, 10000);
 
-        function startDetection(file_name) {
+        function startDetection(file_name, type) {
             if (window.XMLHttpRequest) {
                 // code for modern browsers
                 xhttp = new XMLHttpRequest();
@@ -40,8 +40,11 @@
                 }
             };
             xhttp.open("POST", "/renderVideo", true);
-            xhttp.send(FILE_PATH + file_name);
-
+            if(type == null){
+                xhttp.send(FILE_PATH + file_name);
+            }else{
+                xhttp.send(file_name);
+            }
         }
 
 
@@ -78,7 +81,7 @@
         }
 
         function streamUrl(){
-            startDetection(document.getElementById("cameraUrl").value);
+            startDetection(document.getElementById("cameraUrl").value, 'url');
         }
 
     </script>

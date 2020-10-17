@@ -5,6 +5,7 @@ from os.path import isfile, join
 
 
 app = Flask(__name__)
+//rtsp://100.91.39.237:5554
 
 VIDEO_UPLOAD_FILE_PATH = "static/videos"
 IMAGE_PATH = "static/plate_result"
