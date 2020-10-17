@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <title>India ALPR</title>
@@ -22,10 +22,10 @@
         }
 
         setTimeout(function run() {
-            getNumberPlate();
-            setTimeout(run, 10000);
-        }, 10000);
-
+             getNumberPlate();
+             setTimeout(run, 10000);
+         }, 10000);
+ 
         function startDetection(file_name, type) {
             if (window.XMLHttpRequest) {
                 // code for modern browsers
@@ -40,9 +40,9 @@
                 }
             };
             xhttp.open("POST", "/renderVideo", true);
-            if(type == null){
+            if (type == null) {
                 xhttp.send(FILE_PATH + file_name);
-            }else{
+            } else {
                 xhttp.send(file_name);
             }
         }
@@ -75,13 +75,20 @@
 
         }
 
-        function renderVideo(file_name) {
-            var htmlString = "<video width='600' height='300' controls><source  src=" + FILE_PATH + file_name + "></video>";
+        function renderVideo(file_name, type) {
+            var htmlString = "";
+            if (type == null) {
+                htmlString = "<video width='600' height='300' controls><source  src=" + FILE_PATH + file_name + "></video>";
+            } else {
+                htmlString = "<iframe width='600' height='300' src='"+ file_name+"' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe>";
+            }
             document.getElementById("video_display").innerHTML = htmlString;
         }
 
-        function streamUrl(){
-            startDetection(document.getElementById("cameraUrl").value, 'url');
+        function streamUrl() {
+            var url = document.getElementById("cameraUrl").value;
+            renderVideo(url, 'url');
+            startDetection(url, 'url');
         }
 
     </script>
@@ -97,7 +104,7 @@
             <div class="col-sm-6">
                 <div class="well">
                     <h3>Live Camera URL</h3>
-                    <input type="text" id="cameraUrl" placeholder="https://google.com">
+                    <input type="text" id="cameraUrl" placeholder="Enter live stream URL">
                     <input type="button" value="Stream URL" onclick="streamUrl()">
                 </div>
                 <div class="well">
@@ -108,15 +115,17 @@
                                 {% for file in files%}
                                 <option value="{{file}}">{{file}}</option>
                                 {%endfor%}
-                            </select> 
+                            </select>
                         </div>
                         <div class="col-sm-6">
                             <h3>Upload Video</h3>
-                            <input type="text" placeholder="C:/Videos/v1.mp4">
-        
-                            <input type="button" value="Upload Video">         
+                            <form action="uploadVideo" method="POST" enctype="multipart/form-data">
+                                <input type="file" name="file_upload" accept=".mp4,.mp3" id="file_upload">
+                                <br>
+                                <input type="submit" value="Upload">
+                            </form>
                         </div>
-                    </div>                   
+                    </div>
                 </div>
                 <div class="well">
                     <h3>Recent Plates</h3>
@@ -129,9 +138,10 @@
                 <div class="video_playing">
                     <h3>Video</h3>
                     <div id="video_display">
-                        <video width="600" height="300" autoplay>
+                        <video width="600" height="300" autoplay="true">
                             <source id="video_area">
                             Video for number plate detection
+                            <track label="English" kind="captions" srclang="en" default>
                         </video>
                     </div>
                 </div>

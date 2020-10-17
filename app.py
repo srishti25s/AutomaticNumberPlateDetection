@@ -32,5 +32,12 @@ def render_number_plate():
     files_list = [f for f in os.listdir(IMAGE_PATH) if os.path.isfile(os.path.join(IMAGE_PATH, f))]
     return ','.join(files_list)
 
+@app.route("/uploadVideo",methods=["POST"])
+def upload_video():
+    uploaded_file = request.files['file_upload']
+    if uploaded_file:
+        uploaded_file.save(VIDEO_UPLOAD_FILE_PATH + "/" +uploaded_file.filename)
+    return redirect(url_for("home"))
+
 if __name__ == "__main__":
     app.run(host="127.0.0.1",port=5000,debug=True)
