@@ -1,11 +1,18 @@
 def start_video(fname):
-    print("input : ",fname)
+    import socket
+
+    HOST = '127.0.0.1'
+    PORT = 2001
     import cv2
     import numpy as np
     import requests
     from datetime import datetime
     import os
     import base64
+
+    from configparser import ConfigParser
+    import psycopg2
+    from config_db import config
 
     if not os.path.exists('static/plate_result'):
         os.mkdir('static/plate_result')
@@ -42,6 +49,14 @@ def start_video(fname):
     image_width = 0
     image_height = 0
 
+    def get_param(name):
+        import ast 
+        config = ConfigParser()
+        config.read('config_param.ini')
+        obj = config.get('main',name)
+        obj = ast.literal_eval(obj)
+        return obj
+
 
     with open(plate_classes_path, 'r') as f:
         plate_classes = [line.strip() for line in f.readlines()]
@@ -54,8 +69,6 @@ def start_video(fname):
     number_net = cv2.dnn.readNet(number_weights_path, number_cfg_path)
     color_net = cv2.dnn.readNet(color_weights_path, color_cfg_path)
     COLORS = np.random.uniform(0, 255, size=(len(number_classes), 3))
-
-    cap = cv2.VideoCapture(fname)
 
     def get_output_layers(net):
         layer_names = net.getLayerNames()
@@ -295,7 +308,8 @@ def start_video(fname):
 
         if len(license_str) > 7  and temp_result != license_str:
 
-            date_string = f'{datetime.now():%Y-%m-%d %H:%M:%S%z}'
+            #date_string = f'{datetime.now():%Y-%m-%d %H:%M:%S%z}'
+            date_string = f'{datetime.now():%d/%m/%Y}'
             file_path = date_string
             file_path.replace(":", "_")
             result = "LP_NO : " + license_str + '\n' + "Plate Type : " + car_type + '\n' +  "Date-Time : " + date_string
@@ -313,8 +327,33 @@ def start_video(fname):
 
             current_data = [license_str, car_type, date_string]
             data_info.insert(0, current_data)
-            if (data_info.__len__() > 20):
-                data_info.remove(data_info.__getitem__(20))
+
+            params = config()
+            connection = psycopg2.connect(**params)
+            cursor = connection.cursor()
+
+            if get_param('save_db'):
+                image_str = 'data:image/png;base64,' + base64_string
+                sql = "INSERT INTO vehicle_data(vtype, number, image, date) VALUES ('" + car_type + "', '" + license_str + "', '" + image_str + "', '"  + date_string + "')"
+                cursor.execute(sql)
+                connection.commit()
+                print('Saving into DB')
+
+            if get_param('save_api'):
+                payload = {'vtype': car_type, 'number': license_str, 'img': 'data:image/png;base64,' + base64_string, 'date': date_string}
+                req = requests.post("http://test.eskoool.com/webservice.asmx/SaveANPR", data=payload)
+                print(req.content)
+
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.connect((self.HOST,self.PORT))
+                    data = s.recv(1024)
+                    data = data.decode('utf-8')
+                    data = data.split(',')[4]
+                    print('server data',data,type(data))
+            except Exception as e:
+                print(e)
+
 
             temp_result1 = license_str
 
@@ -360,11 +399,10 @@ def start_video(fname):
             process_plate_frame(plate_color_img, color_classes[class_ids[i]], round(x), round(y))
 
 
-    print("fname : ", fname)
     cap = cv2.VideoCapture(fname)
     i = 0
     framewidth = 1061
-    while cap.isOpened():
+    while True:
         ret, frame = cap.read()
         if ret:
             i = i + 1
@@ -375,5 +413,6 @@ def start_video(fname):
             
             if i % 3 == 0:
                 process_frame(frame_origin)
+                #print('Frame number,',i)
         else:
             break 
